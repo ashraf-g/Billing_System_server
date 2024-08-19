@@ -9,4 +9,6 @@ const serviceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+serviceSchema.index({ name: "text" });
+
 module.exports = mongoose.model("Service", serviceSchema);

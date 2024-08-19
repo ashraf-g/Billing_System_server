@@ -11,9 +11,7 @@ const {
   getServiceById,
   updateService,
   deleteService,
-  filterServices,
   searchService,
-  sortServices,
 } = require("../Controllers/serviceController");
 
 // Create a new service
@@ -31,14 +29,8 @@ router.put("/service/update/:id", updateService);
 // Delete a service by ID
 router.delete("/service/delete/:id", deleteService);
 
-// Filter services by a specific category
-router.get("/service/filter/:category", filterServices);
-
 // Search services by name or description
 router.get("/service/search/:query", searchService);
-
-// Sort services by price in ascending or descending order
-router.get("/service/sort/:order", sortServices);
 
 // Add error handling middleware
 router.use((err, req, res, next) => {
