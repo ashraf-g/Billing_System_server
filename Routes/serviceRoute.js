@@ -1,4 +1,5 @@
 const express = require("express");
+const isAuthenticated = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -13,6 +14,9 @@ const {
   deleteService,
   searchService,
 } = require("../Controllers/serviceController");
+
+// Apply authentication middleware to all routes
+router.use(isAuthenticated);
 
 // Create a new service
 router.post("/service/create", createService);

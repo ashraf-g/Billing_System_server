@@ -38,3 +38,5 @@ exports.sendOtp = async (admin, otp) => {
     console.error("Error sending OTP:", error);
   }
 };
+
+exports.sendInvoice = async (invoice) => {};

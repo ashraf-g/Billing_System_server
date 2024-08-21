@@ -14,6 +14,7 @@ db();
 
 const admin = require("./Routes/adminRoute");
 const service = require("./Routes/serviceRoute");
+const invoice = require("./Routes/invoiceRoute");
 
 //init app and middleware
 const app = express();
@@ -39,6 +40,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", admin);
 app.use("/api/v1", service);
+app.use("/api/v1", invoice);
 
 //listen server
 app.listen(PORT, () => {
