@@ -12,15 +12,13 @@ const {
   updateInvoice,
   searchInvoice,
   overView,
-  summary,
-  getTopCustomers,
-  getCustomerDemographics,
-  getCustomerDistribution,
   getPendingPayments,
   getRepeatCustomers,
   getRecentPayments,
-  getStatusDistribution,
   getTopServicesByRevenue,
+  sendInvoice,
+  getSentEmail,
+  getUnSentEmail,
 } = require("../Controllers/invoiceController");
 
 router.use(isAuthenticated);
@@ -46,18 +44,6 @@ router.put("/invoice/update/:id", updateInvoice);
 // Get invoice overviews
 router.get("/invoice/overview", overView);
 
-// Get invoice summary
-router.get("/invoice/summary", summary);
-
-// Get top customers
-router.get("/invoice/getTopCustomers", getTopCustomers);
-
-// Get customer demographics
-router.get("/invoice/getCustomerDemographics", getCustomerDemographics);
-
-// Get customer distribution
-router.get("/invoice/getCustomerDistribution", getCustomerDistribution);
-
 // Get pending payments
 router.get("/invoice/getPendingPayments", getPendingPayments);
 
@@ -67,10 +53,16 @@ router.get("/invoice/getRepeatCustomers", getRepeatCustomers);
 // Get recent payments
 router.get("/invoice/getRecentPayments", getRecentPayments);
 
-// Get status distribution
-router.get("/invoice/getStatusDistribution", getStatusDistribution);
-
 // Get top services by revenue
 router.get("/invoice/getTopServicesByRevenue", getTopServicesByRevenue);
+
+// Send invoice by email
+router.post("/invoice/sendInvoice/:id", sendInvoice);
+
+// Get sent email
+router.get("/invoice/getSentEmail", getSentEmail);
+
+// Get unsent email
+router.get("/invoice/getUnsentEmail", getUnSentEmail);
 
 module.exports = router;

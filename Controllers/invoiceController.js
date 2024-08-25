@@ -3,7 +3,6 @@ const Payment = require("../Models/paymentModel");
 const InvoiceItem = require("../Models/invoiceItemModel");
 const { generateInvoiceNo } = require("../Utils/genrateInvoiceNo");
 const { sendInvoice } = require("../Utils/mail");
-const { formatDate } = require("../Utils/formateDate");
 
 exports.createInvoice = async (req, res) => {
   try {
@@ -167,97 +166,6 @@ exports.overView = async (req, res) => {
   }
 };
 
-// Sales and Income Summary Endpoint
-exports.summary = async (req, res) => {
-  try {
-    const { groupBy } = req.query;
-
-    if (!["month"].includes(groupBy)) {
-      return res.status(400).json({ error: "Invalid groupBy parameter" });
-    }
-    const invoiceAggregation = await Invoice.aggregate([
-      {
-        $addFields: {
-          month: { $dateToString: { format: "%Y-%m", date: "$issue_date" } },
-        },
-      },
-      {
-        $group: {
-          _id: "$month",
-          totalSales: { $sum: "$total_amount" },
-        },
-      },
-      {
-        $sort: { _id: 1 }, // Sort by month
-      },
-    ]);
-
-    // Aggregate payments by month
-    const paymentAggregation = await Payment.aggregate([
-      {
-        $addFields: {
-          month: { $dateToString: { format: "%Y-%m", date: "$payment_date" } },
-        },
-      },
-      {
-        $group: {
-          _id: "$month",
-          totalPayments: { $sum: "$amount" },
-        },
-      },
-      {
-        $sort: { _id: 1 }, // Sort by month
-      },
-    ]);
-
-    // Map results to include all months
-    const result = {
-      months: [],
-      sales: [],
-      income: [],
-    };
-
-    const monthSalesMap = new Map(
-      invoiceAggregation.map(({ _id, totalSales }) => [_id, totalSales])
-    );
-    const monthIncomeMap = new Map(
-      paymentAggregation.map(({ _id, totalPayments }) => [_id, totalPayments])
-    );
-
-    const allMonths = [
-      ...new Set([...monthSalesMap.keys(), ...monthIncomeMap.keys()]),
-    ].sort();
-
-    allMonths.forEach((month) => {
-      result.months.push(month);
-      result.sales.push(monthSalesMap.get(month) || 0);
-      result.income.push(monthIncomeMap.get(month) || 0);
-    });
-
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// controllers/invoiceController.js
-exports.getStatusDistribution = async (req, res) => {
-  try {
-    const statusDistribution = await Invoice.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    res.json(statusDistribution);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 exports.getTopServicesByRevenue = async (req, res) => {
   try {
     const { limit = 5 } = req.query;
@@ -388,86 +296,6 @@ exports.getPendingPayments = async (req, res) => {
   }
 };
 
-exports.getTopCustomers = async (req, res) => {
-  try {
-    const { sortBy = "revenue", limit = 10 } = req.query;
-
-    let aggregationPipeline;
-
-    if (sortBy === "revenue") {
-      // Aggregate customers by total revenue
-      aggregationPipeline = [
-        {
-          $group: {
-            _id: "$customer.email", // Use email or a unique identifier
-            name: { $first: "$customer.name" },
-            totalRevenue: { $sum: "$total_amount" },
-          },
-        },
-        {
-          $sort: { totalRevenue: -1 }, // Sort by revenue in descending order
-        },
-        { $limit: parseInt(limit) },
-      ];
-    } else if (sortBy === "frequency") {
-      // Aggregate customers by frequency of purchases
-      aggregationPipeline = [
-        {
-          $group: {
-            _id: "$customer.email", // Use email or a unique identifier
-            name: { $first: "$customer.name" },
-            purchaseCount: { $sum: 1 },
-          },
-        },
-        {
-          $sort: { purchaseCount: -1 }, // Sort by frequency in descending order
-        },
-        { $limit: parseInt(limit) },
-      ];
-    } else {
-      return res.status(400).json({
-        message: "Invalid sortBy parameter. Use 'revenue' or 'frequency'.",
-      });
-    }
-
-    const topCustomers = await Invoice.aggregate(aggregationPipeline);
-
-    res.json(topCustomers);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.getCustomerDemographics = async (req, res) => {
-  try {
-    // Aggregation pipeline to analyze customer demographics
-    const demographics = await Invoice.aggregate([
-      {
-        $group: {
-          _id: "$customer.address", // Group by customer address (can be adjusted to city, state, etc.)
-          customerCount: { $sum: 1 },
-          totalRevenue: { $sum: "$total_amount" },
-        },
-      },
-      {
-        $sort: { customerCount: -1 }, // Sort by number of customers (or you can sort by revenue)
-      },
-      {
-        $project: {
-          _id: 0,
-          address: "$_id",
-          customerCount: 1,
-          totalRevenue: 1,
-        },
-      },
-    ]);
-
-    res.json(demographics);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 exports.getRepeatCustomers = async (req, res) => {
   try {
     // Define the time frame to consider recent purchases (e.g., last 12 months)
@@ -525,29 +353,36 @@ exports.getRepeatCustomers = async (req, res) => {
   }
 };
 
-exports.getCustomerDistribution = async (req, res) => {
+exports.sendInvoice = async (req, res) => {
   try {
-    // Aggregation pipeline to count customers by location
-    const customerDistribution = await Invoice.aggregate([
-      {
-        $group: {
-          _id: "$customer.address", // Group by location (can be changed to city, state, etc.)
-          customerCount: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          location: "$_id",
-          customerCount: 1,
-        },
-      },
-      {
-        $sort: { customerCount: -1 }, // Sort by number of customers
-      },
-    ]);
+    const { id } = req.params;
+    const invoice = await Invoice.findById(id);
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+    console.log(invoice);
+    await sendInvoice(invoice);
+    invoice.invoiceEmail = "sent";
+    await invoice.save();
+    res.json({ message: "Invoice sent successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-    res.json(customerDistribution);
+exports.getSentEmail = async (req, res) => {
+  try {
+    const invoices = await Invoice.find({ invoiceEmail: "sent" });
+    res.json(invoices);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getUnSentEmail = async (req, res) => {
+  try {
+    const invoices = await Invoice.find({ invoiceEmail: { $ne: "sent" } });
+    res.json(invoices);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

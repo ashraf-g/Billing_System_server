@@ -18,6 +18,12 @@ const invoiceSchema = new mongoose.Schema(
       contact_number: { type: String, required: true },
       email: { type: String, required: true },
     },
+    invoiceEmail: {
+      type: String,
+      enum: ["sent", "unsent"],
+      required: true,
+      default: "unsent",
+    },
   },
   { timestamps: true }
 );

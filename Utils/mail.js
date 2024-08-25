@@ -39,4 +39,26 @@ exports.sendOtp = async (admin, otp) => {
   }
 };
 
-exports.sendInvoice = async (invoice) => {};
+exports.sendInvoice = async (invoice) => {
+  try {
+    const mailOptions = {
+      from: process.env.USER,
+      to: invoice.customer.email,
+      subject: "Invoice",
+      text: `Dear ${invoice.customer.name},\n\nYour invoice is attached. Please find the attached PDF file.\n\nBest regards,\nBright Build Care`,
+      attachments: [
+        {
+          filename: "invoice.pdf",
+          content: invoice.pdfBuffer,
+          encoding: "base64",
+        },
+      ],
+    };
+
+    // Send email
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
