@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const Admin = require("../Models/adminModel");
+const Admin = require("../models/adminModel");
 
 dotenv.config();
 // Create transporter using Nodemailer

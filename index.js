@@ -1,27 +1,22 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const dotenv = require("dotenv");
-const db = require("./Config/db");
+const db = require("./src/config/db");
 
 // dotenv config to load environment variables from.env file
-dotenv.config();
+require("dotenv").config({ path: "./src/.env" });
 
 //connect to database
 db();
-
-//routes
-
-const admin = require("./Routes/adminRoute");
-const service = require("./Routes/serviceRoute");
-const invoice = require("./Routes/invoiceRoute");
-const invoiceItem = require("./Routes/invoiceItemRoute");
 
 //init app and middleware
 const app = express();
 
 //middleware to handle CORS requests (Cross-Origin Resource Sharing)
-app.use(cors());
+let corsPolicy = {
+  origin: "*",
+};
+app.use(cors(corsPolicy));
 //body parser middleware to parse incoming request bodies
 app.use(bodyParser.json({ limit: "10mb" }));
 //express middleware to parse JSON and url-encoded data
@@ -29,22 +24,16 @@ app.use(express.json());
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
 
-//port
-const PORT = 5000 || process.env.PORT;
-
 //home route
 app.get("/", (req, res) => {
   res.send("Welcome to Ashraf Sever");
 });
 
 //use routes
-
-app.use("/api/v1", admin);
-app.use("/api/v1", service);
-app.use("/api/v1", invoice);
-app.use("/api/v1", invoiceItem);
+require("./src/routes/adminRoute")(app);
+require("./src/routes/serviceRoute")(app);
 
 //listen server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} `);
+app.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT} `);
 });

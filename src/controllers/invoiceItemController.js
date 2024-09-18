@@ -10,6 +10,10 @@ exports.addItemToInvoice = async (req, res) => {
     const { invoice_id } = req.params;
     const { service_id, quantity, total_price } = req.body;
 
+    if (service_id || quantity || total_price) {
+      return res.status(401).json({ message: "all fields are required" });
+    }
+
     // Check if invoice exists
     const invoice = await Invoice.findById(invoice_id);
     if (!invoice) {
@@ -22,16 +26,16 @@ exports.addItemToInvoice = async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    // Add item to invoice items array
-    invoice.items.push({
+    const invoiceItem = new InvoiceItem({
+      invoice_id,
       service_id,
       quantity,
       total_price,
     });
 
     // Save invoice
-    await invoice.save();
-    res.json(invoice);
+    await invoiceItem.save();
+    res.json(invoiceItem);
   } catch (error) {
     res.status(500).json({ message: error.message });
     console.error(error);

@@ -1,4 +1,4 @@
-const Admin = require("../Models/adminModel");
+const Admin = require("../models/adminModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
@@ -6,7 +6,7 @@ const otpGenerator = require("otp-generator");
 const { sendOtp } = require("../Utils/mail");
 
 //! Create a new admin
-exports.createAdmin = async (req, res) => {
+exports.signUp = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -50,7 +50,7 @@ exports.createAdmin = async (req, res) => {
 };
 
 //! Login
-exports.loginAdmin = async (req, res) => {
+exports.signIn = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
